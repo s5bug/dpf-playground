@@ -1,3 +1,5 @@
+allowBuilds:
+  "@parcel/watcher": false
 overrides:
   "@scala-js/vite-plugin-scalajs>vite": "$vite"
   "esbuild": "-"
