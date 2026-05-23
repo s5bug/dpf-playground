@@ -1,0 +1,6 @@
+// we've already loaded fonts, don't do it again
+@use 'katex/src/styles/katex' with (
+  $use-ttf: false,
+  $use-woff: false,
+  $use-woff2: false,
+);

@@ -1,0 +1,23 @@
+{
+  "name": "dpf-playground",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "biome check && tsc && vite build",
+    "preview": "vite preview",
+    "fmt": "biome check --write"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.15",
+    "@scala-js/vite-plugin-scalajs": "^1.1.0",
+    "@types/node": "^25.9.0",
+    "sass-embedded": "^1.99.0",
+    "typescript": "~6.0.2",
+    "vite": "^8.0.12"
+  },
+  "dependencies": {
+    "katex": "^0.16.47"
+  }
+}

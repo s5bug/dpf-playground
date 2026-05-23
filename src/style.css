@@ -1,0 +1,12 @@
+@import "component/katex-fonts.scss";
+
+.tree-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tree-children {
+  display: flex;
+  justify-content: center;
+}
