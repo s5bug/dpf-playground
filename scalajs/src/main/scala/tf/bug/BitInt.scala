@@ -14,7 +14,7 @@ import scodec.bits.{BitVector, ByteVector}
 import spire.algebra.{Group, Order}
 import spire.math.SafeLong
 import tf.bug
-import tf.bug.dpf.{Correctable, Domain}
+import tf.bug.dpf.{Correctable, Domain, Sampleable, Sampler}
 
 opaque type UBitInt[N <: Int] = SafeLong
 
@@ -109,6 +109,7 @@ object UBitInt {
     def indexOf(a: UBitInt[N]): UBitInt[N] = a
     def apply(index: UBitInt[N]): UBitInt[N] = index
   }
+    
 }
 
 opaque type BitInt[N <: Int] = UBitInt[N]

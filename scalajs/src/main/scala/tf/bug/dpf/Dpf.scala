@@ -38,7 +38,7 @@ final case class Dpf[X, S, Y](seed0: S, seed1: S, cws0: Vector[S], cws1: Vector[
 object Dpf {
 
   final case class Half[X, S, Y](seed: S, cws: Vector[S], advices: BitVector, leaf: Y) {
-
+    
     def eval(party: Party, at: X, embedding: Embedding[X, S, Y], seeding: Seeding[S]): Y = {
       // TODO replace printlns with modifying some log for use in displaying
       println("!!! EVAL: " + party)
