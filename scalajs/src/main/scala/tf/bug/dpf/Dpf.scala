@@ -8,22 +8,22 @@ import spire.algebra.Group
 import tf.bug.dpf.Party.Party1
 import tf.bug.{UBitInt, dpf}
 
-final case class Dpf[X, S, Y](seed0: S, seed1: S, cws0: Vector[S], cws1: Vector[S], advices: BitVector, leaf0: Y, leaf1: Y) {
+final case class Dpf[X, S, L, Y](seed0: S, seed1: S, cws0: Vector[S], cws1: Vector[S], advices: BitVector, leaf0: L, leaf1: L) {
 
-  lazy val p0half: Dpf.Half[X, S, Y] = Dpf.Half(seed0, cws0, advices, leaf0)
-  lazy val p1half: Dpf.Half[X, S, Y] = Dpf.Half(seed1, cws1, advices, leaf1)
+  lazy val p0half: Dpf.Half[X, S, L, Y] = Dpf.Half(seed0, cws0, advices, leaf0)
+  lazy val p1half: Dpf.Half[X, S, L, Y] = Dpf.Half(seed1, cws1, advices, leaf1)
   
   // produces a corrected leaf value for a certain seed, party 0
-  def eval0(x: X, embedding: Embedding[X, S, Y], seeding: Seeding[S]): Y = {
+  def eval0(x: X, embedding: Embedding.Aux[X, S, L, Y], seeding: Seeding[S]): Y = {
     p0half.eval(Party.Party0, x, embedding, seeding)
   }
 
   // produces a corrected leaf value for a certain seed, party 1
-  def eval1(x: X, embedding: Embedding[X, S, Y], seeding: Seeding[S]): Y = {
+  def eval1(x: X, embedding: Embedding.Aux[X, S, L, Y], seeding: Seeding[S]): Y = {
     p1half.eval(Party.Party1, x, embedding, seeding)
   }
 
-  def apply(x: X, embedding: Embedding[X, S, Y], seeding: Seeding[S]): Y = {
+  def apply(x: X, embedding: Embedding.Aux[X, S, L, Y], seeding: Seeding[S]): Y = {
     val p0 = eval0(x, embedding, seeding)
     val p1 = eval1(x, embedding, seeding)
 
@@ -37,9 +37,9 @@ final case class Dpf[X, S, Y](seed0: S, seed1: S, cws0: Vector[S], cws1: Vector[
 
 object Dpf {
 
-  final case class Half[X, S, Y](seed: S, cws: Vector[S], advices: BitVector, leaf: Y) {
+  final case class Half[X, S, L, Y](seed: S, cws: Vector[S], advices: BitVector, leaf: L) {
     
-    def eval(party: Party, at: X, embedding: Embedding[X, S, Y], seeding: Seeding[S]): Y = {
+    def eval(party: Party, at: X, embedding: Embedding.Aux[X, S, L, Y], seeding: Seeding[S]): Y = {
       // TODO replace printlns with modifying some log for use in displaying
       println("!!! EVAL: " + party)
 
@@ -94,18 +94,18 @@ object Dpf {
       println("final leaf node: " + parent)
 
       // parent is now our leaf seed
-      val leafY = embedding.extract(at, parent)
+      val leafL = embedding.lengthen(parent)
       // if parent has the final bit set, we apply the correction word
       // p0 takes leafy + CW, p1 takes leafy - CW
       val result = if myAdvice then {
         val op = party match {
           case Party.Party0 => leaf
-          case Party.Party1 => embedding.yIsGroup.inverse(leaf)
+          case Party.Party1 => embedding.lIsGroup.inverse(leaf)
         }
-        embedding.yIsGroup.combine(leafY, op)
-      } else leafY
+        embedding.lIsGroup.combine(leafL, op)
+      } else leafL
 
-      result
+      embedding.extract(at, result)
     }
 
   }
@@ -118,12 +118,12 @@ object Dpf {
   def prepare[F[_], S](random: Random[F])(using mnd: Monad[F], evS: Sampleable[S]): F[Prepared[S]] =
     prepare(evS[F](random))
   
-  def generate[X, S, Y](
+  def generate[X, S, L, Y](
     prepared: Prepared[S],
     input: X, output: Y,
-    embedding: Embedding[X, S, Y],
+    embedding: Embedding.Aux[X, S, L, Y],
     seeding: Seeding[S],
-  ): Dpf[X, S, Y] = {
+  ): Dpf[X, S, L, Y] = {
     val Prepared(seed0, seed1) = prepared
     
     given groupS: Group[S] = seeding.seedIsCorrectable.group
@@ -252,16 +252,17 @@ object Dpf {
     // - in the first case, CW = -extract(x, parent0) + -y + extract(x, parent1)
     // - in the second case, CW = -extract(x, parent0) + -y + extract(x, parent1)
 
-    val p0y = embedding.extract(input, parent0)
-    val p1y = embedding.extract(input, parent1)
-
-    val negativeP0y = embedding.yIsGroup.inverse(p0y)
-    val negativeOutput = embedding.yIsGroup.inverse(output)
-    val leafCw = embedding.yIsGroup.combine(negativeP0y, embedding.yIsGroup.combine(negativeOutput, p1y))
+    val p0l = embedding.lengthen(parent0)
+    val p1l = embedding.lengthen(parent1)
+    
+    val negativeP0l = embedding.lIsGroup.inverse(p0l)
+    val outputL = embedding.embed(input, output)
+    val negativeOutputL = embedding.lIsGroup.inverse(outputL)
+    val leafCw = embedding.lIsGroup.combine(negativeP0l, embedding.lIsGroup.combine(negativeOutputL, p1l))
 
     // the party that's not supposed to apply the CW gets the negated version
-    val p0cw = if sign then leafCw else embedding.yIsGroup.inverse(leafCw)
-    val p1cw = if sign then embedding.yIsGroup.inverse(leafCw) else leafCw
+    val p0cw = if sign then leafCw else embedding.lIsGroup.inverse(leafCw)
+    val p1cw = if sign then embedding.lIsGroup.inverse(leafCw) else leafCw
     Dpf(seed0c, seed1c, cws0Builder.result(), cws1Builder.result(), BitVector.bits(advicesBuilder.result()), p0cw, p1cw)
   }
 

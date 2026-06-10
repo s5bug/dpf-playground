@@ -306,12 +306,14 @@ object DpfPlayground extends IOWebApp {
     import HtmlShow.given
     Resource.eval(Random.scalaUtilRandomSeedInt[IO](67)).flatMap { rand =>
       val myEmbedding: Embedding[Domain, Seed, Codomain] =
-        Embedding.fromBitPackable(BitVecN.codec[8], UBitInt.codec[2])
+        Embedding.fromBitPackable(UBitInt.codec[2])
+
+      type L = myEmbedding.L
 
       Resource.eval(SecureRandom.javaSecuritySecureRandom[IO]).flatMap { secureRandom =>
         Resource.eval(Dpf.prepare[IO, Seed](secureRandom)).flatMap { prepared =>
           val prg = aesSbox
-          val myDpf = Dpf.generate[Domain, Seed, Codomain](prepared, UBitInt[4](0xe), UBitInt[2](0x1), myEmbedding, prg)
+          val myDpf = Dpf.generate[Domain, Seed, L, Codomain](prepared, UBitInt[4](0x8), UBitInt[2](0x1), myEmbedding, prg)
           // println("symbols: " + prg.ctr + " (next symbol is " + FreeGroup.fixBase26(Integer.toString(prg.ctr, 26)) + ")")
 
           Resource.eval(FreeGroup.sampleStringSymbols[IO]).flatMap { stringSymbolSampler =>

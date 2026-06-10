@@ -97,40 +97,40 @@ object FreeGroup {
     })
   }
 
-  final class ClearEmbedding[X, A, Y](val xDomain: Domain[X], val yDomain: Domain[Y], val yIsGroup: Group[Y], val seed: Int) extends Embedding[X, Advised[FreeGroup[A]], Y] {
-    val xCodec: Codec[UBitInt[xDomain.W]] = UBitInt.codec[xDomain.W](using xDomain.bitwidth)
-
-    def xToBits(x: X): BitVector =
-      xCodec.encode(xDomain.indexOf(x)).toTry.get
-
-    override def directions(x: X): IterableOnce[TreeDirection] = {
-      val xBits = xToBits(x)
-      (0 until xBits.size.toInt).map(idx => if xBits(idx) then TreeDirection.Right else TreeDirection.Left)
-    }
-
-    private val rnd: scala.util.Random = scala.util.Random.javaRandomToRandom(new java.util.Random(seed))
-
-    private val cache: mutable.Map[(X, Advised[FreeGroup[A]]), Y] =
-      mutable.Map()
-
-    override def extract(at: X, from: Advised[FreeGroup[A]]): Y = cache.getOrElseUpdate((at, from), {
-      println(s"embedding: generating at ${at} from ${from}")
-
-      // generate a random index with 4x the bit width for better randomness
-      val quadWidth = yDomain.bitwidth.value * 4
-      val bytes = rnd.nextBytes((quadWidth + 7) / 8)
-      val bitVec = BitVector.view(bytes, quadWidth)
-      val bvN: BitVecN[quadWidth.type] = BitVecN(bitVec)
-      val number: UBitInt[quadWidth.type] = bvN.toUBitInt
-      val max: UBitInt[quadWidth.type] = yDomain.indexOf(yDomain.bounded.maxBound).asInstanceOf[UBitInt[quadWidth.type]]
-      val min: UBitInt[quadWidth.type] = yDomain.indexOf(yDomain.bounded.minBound).asInstanceOf[UBitInt[quadWidth.type]]
-
-      val idx = min + (number % (max - min + UBitInt(1)))
-      val idxAs: UBitInt[yDomain.W] = idx.asInstanceOf[UBitInt[yDomain.W]]
-
-      yDomain(idxAs)
-    })
-
-  }
+//  final class ClearEmbedding[X, A, Y](val xDomain: Domain[X], val yDomain: Domain[Y], val yIsGroup: Group[Y], val seed: Int) extends Embedding[X, Advised[FreeGroup[A]], Y] {
+//    val xCodec: Codec[UBitInt[xDomain.W]] = UBitInt.codec[xDomain.W](using xDomain.bitwidth)
+//
+//    def xToBits(x: X): BitVector =
+//      xCodec.encode(xDomain.indexOf(x)).toTry.get
+//
+//    override def directions(x: X): IterableOnce[TreeDirection] = {
+//      val xBits = xToBits(x)
+//      (0 until xBits.size.toInt).map(idx => if xBits(idx) then TreeDirection.Right else TreeDirection.Left)
+//    }
+//
+//    private val rnd: scala.util.Random = scala.util.Random.javaRandomToRandom(new java.util.Random(seed))
+//
+//    private val cache: mutable.Map[(X, Advised[FreeGroup[A]]), Y] =
+//      mutable.Map()
+//
+//    override def extract(at: X, from: Advised[FreeGroup[A]]): Y = cache.getOrElseUpdate((at, from), {
+//      println(s"embedding: generating at ${at} from ${from}")
+//
+//      // generate a random index with 4x the bit width for better randomness
+//      val quadWidth = yDomain.bitwidth.value * 4
+//      val bytes = rnd.nextBytes((quadWidth + 7) / 8)
+//      val bitVec = BitVector.view(bytes, quadWidth)
+//      val bvN: BitVecN[quadWidth.type] = BitVecN(bitVec)
+//      val number: UBitInt[quadWidth.type] = bvN.toUBitInt
+//      val max: UBitInt[quadWidth.type] = yDomain.indexOf(yDomain.bounded.maxBound).asInstanceOf[UBitInt[quadWidth.type]]
+//      val min: UBitInt[quadWidth.type] = yDomain.indexOf(yDomain.bounded.minBound).asInstanceOf[UBitInt[quadWidth.type]]
+//
+//      val idx = min + (number % (max - min + UBitInt(1)))
+//      val idxAs: UBitInt[yDomain.W] = idx.asInstanceOf[UBitInt[yDomain.W]]
+//
+//      yDomain(idxAs)
+//    })
+//
+//  }
 
 }
