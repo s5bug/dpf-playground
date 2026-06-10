@@ -306,7 +306,7 @@ object DpfPlayground extends IOWebApp {
     import HtmlShow.given
     Resource.eval(Random.scalaUtilRandomSeedInt[IO](67)).flatMap { rand =>
       val myEmbedding: Embedding[Domain, Seed, Codomain] =
-        Embedding.fromBitPackable(UBitInt.codec[2])
+        Embedding.uadditiveSharePacking
 
       type L = myEmbedding.L
 
