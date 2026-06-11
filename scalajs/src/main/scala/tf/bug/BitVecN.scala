@@ -26,6 +26,9 @@ object BitVecN {
   extension[N <: Int](bvn: BitVecN[N]) {
     def toUBitInt: UBitInt[N] =
       SafeLong(bvn.toBigInt(false)).asInstanceOf[UBitInt[N]]
+      
+    def toBitInt: BitInt[N] =
+      toUBitInt.asSigned
 
     def xor(other: BitVecN[N]): BitVecN[N] =
       bvn.xor(other)

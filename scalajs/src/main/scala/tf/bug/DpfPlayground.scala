@@ -11,7 +11,7 @@ import dpf.{Correctable, Dpf, Embedding, Sampler, Seeding}
 import fs2.dom.HtmlElement
 import scodec.bits.BitVector
 import tf.bug.dpf.impl.unsafedebug.FreeGroup
-import tf.bug.dpf.impl.{Advised, GroupS3, Ranqd1, SBoxPrg}
+import tf.bug.dpf.impl.{Advised, AesPrg, GroupS3, Ranqd1, SBoxSeeding}
 
 object DpfPlayground extends IOWebApp {
 
@@ -20,7 +20,7 @@ object DpfPlayground extends IOWebApp {
   val uthree: UBitInt[8] = UBitInt[8](3)
   val uminusOne: UBitInt[8] = UBitInt[8](-1)
 
-  val incrementSbox = SBoxPrg[4](Vector(
+  val incrementSbox = SBoxSeeding[4](Vector(
     UBitInt[4](0x4),
     UBitInt[4](0x3),
     UBitInt[4](0xf),
@@ -39,7 +39,7 @@ object DpfPlayground extends IOWebApp {
     UBitInt[4](0x0),
   ))
 
-  val aesSbox = SBoxPrg[8](Vector(
+  val aesSbox = SBoxSeeding[8](Vector(
     UBitInt[8](0x63),
     UBitInt[8](0x7c),
     UBitInt[8](0x77),
@@ -299,9 +299,9 @@ object DpfPlayground extends IOWebApp {
   ))
 
   override def render: Resource[effect.IO, HtmlElement[effect.IO]] = {
-    type Domain = UBitInt[4]
-    type Codomain = UBitInt[2]
-    type Seed = BitVecN[8]
+    type Domain = UBitInt[128]
+    type Codomain = UBitInt[128]
+    type Seed = BitVecN[128]
 
     import HtmlShow.given
     Resource.eval(Random.scalaUtilRandomSeedInt[IO](67)).flatMap { rand =>
@@ -312,8 +312,8 @@ object DpfPlayground extends IOWebApp {
 
       Resource.eval(SecureRandom.javaSecuritySecureRandom[IO]).flatMap { secureRandom =>
         Resource.eval(Dpf.prepare[IO, Seed](secureRandom)).flatMap { prepared =>
-          val prg = aesSbox
-          val myDpf = Dpf.generate[Domain, Seed, L, Codomain](prepared, UBitInt[4](0x8), UBitInt[2](0x1), myEmbedding, prg)
+          val prg = AesPrg(BitVecN[128](BitVector.fromHex("5eaf00decafebabedeadbeef5eaf00de").get))
+          val myDpf = Dpf.generate[Domain, Seed, L, Codomain](prepared, UBitInt[128](0x8), UBitInt[128](0x1), myEmbedding, prg.Seeding)
           // println("symbols: " + prg.ctr + " (next symbol is " + FreeGroup.fixBase26(Integer.toString(prg.ctr, 26)) + ")")
 
           Resource.eval(FreeGroup.sampleStringSymbols[IO]).flatMap { stringSymbolSampler =>
@@ -321,11 +321,11 @@ object DpfPlayground extends IOWebApp {
               div(
                 p(myDpf.toString),
                 // p(symbols.combineAll.toString),
-                p(myDpf.apply(UBitInt[4](0x0), myEmbedding, prg).toString),
-                p(myDpf.apply(UBitInt[4](0x1), myEmbedding, prg).toString),
-                p(myDpf.apply(UBitInt[4](0x8), myEmbedding, prg).toString),
-                p(myDpf.apply(UBitInt[4](0xa), myEmbedding, prg).toString),
-                p(myDpf.apply(UBitInt[4](0xf), myEmbedding, prg).toString),
+                p(myDpf.apply(UBitInt[128](0x0), myEmbedding, prg.Seeding).toString),
+                p(myDpf.apply(UBitInt[128](0x1), myEmbedding, prg.Seeding).toString),
+                p(myDpf.apply(UBitInt[128](0x8), myEmbedding, prg.Seeding).toString),
+                p(myDpf.apply(UBitInt[128](0xa), myEmbedding, prg.Seeding).toString),
+                p(myDpf.apply(UBitInt[128](0xf), myEmbedding, prg.Seeding).toString),
               )
             }
           }

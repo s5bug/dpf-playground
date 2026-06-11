@@ -6,7 +6,8 @@ import cats.syntax.invariant.*
 import scodec.{Attempt, Codec}
 import scodec.bits.BitVector
 import spire.algebra.Group
-import tf.bug.{BitVecN, UBitInt}
+import spire.math.SafeLong
+import tf.bug.{BitVecN, PackedUBitInts, UBitInt}
 
 // we have to steps that occur as transformations out of a DPF's seed block:
 // 1. S → L, which may involve calling a PRG to lengthen S
@@ -39,6 +40,7 @@ object Embedding {
     new XorSharePacking[X, W, R](xDomain, wValue, rValue)
 
   private final class XorSharePacking[X, W <: Int, R <: Int](val xDomain: Domain[X], val wValue: ValueOf[W], val rValue: ValueOf[R]) extends Embedding[X, BitVecN[W], BitVecN[R]] {
+    // TODO move this validation from the contsructor to the method
     // how many Ys can we fit into W bits
     val quotient: Int = wValue.value / rValue.value
     // yBitWidth * 2^depthOfYinS ≤ sBitWidth
@@ -91,8 +93,75 @@ object Embedding {
     }
   }
 
-  // TODO add PackedUInt[W, N]
   def uadditiveSharePacking[X, W <: Int, R <: Int](using xDomain: Domain[X], wValue: ValueOf[W], rValue: ValueOf[R]): Embedding[X, BitVecN[W], UBitInt[R]] =
+    new UadditiveSharePacking[X, W, R](xDomain, wValue, rValue)
+
+  private final class UadditiveSharePacking[X, W <: Int, R <: Int](val xDomain: Domain[X], val wValue: ValueOf[W], val rValue: ValueOf[R]) extends Embedding[X, BitVecN[W], UBitInt[R]] {
+    private inline given wValue.type = wValue
+    private inline given rValue.type = rValue
+
+    // TODO move validation from constructor to method
+    // how many leaf values can be stored in a block
+    val ysPerS: Int = wValue.value / rValue.value
+    // how many indexes there are into blocks
+    // = xDomain.size.ceilDiv(ysPerS)
+    val nonEmptyLeafBlocks: SafeLong = (xDomain.size + (ysPerS - 1)) / ysPerS
+    // how many bits are required to select a unique block
+    // 1 block → 0 bits
+    // 2 blocks → 1 bit
+    // 3 blocks → 2 bits
+    // 4 blocks → 2 bits
+    // 5 thru 8 blocks → 3 bits
+    val indexLength: Int = (nonEmptyLeafBlocks - 1).bitLength
+
+    def xToIndexOfBlock(x: X): SafeLong = {
+      xDomain.indexOf(x).toSafeLong / ysPerS
+    }
+
+    def xToIndexOfY(x: X): Int = {
+      (xDomain.indexOf(x).toSafeLong % ysPerS).toInt
+    }
+
+    override def directions(x: X): IterableOnce[TreeDirection] = {
+      val idx = xToIndexOfBlock(x)
+      val bits = UBitInt[indexLength.type](idx.toBigInt).toBitVecN.raw
+
+      (0 until indexLength).map(idx => if bits(idx) then TreeDirection.Right else TreeDirection.Left)
+    }
+
+    override type L = PackedUBitInts[R, ysPerS.type]
+    override val lIsGroup: Group[PackedUBitInts[R, ysPerS.type]] = PackedUBitInts.group
+    override val yIsGroup: Group[UBitInt[R]] = UBitInt.ubitIntGroup
+
+    override def lengthen(from: BitVecN[W]): PackedUBitInts[R, ysPerS.type] = {
+      val bits = from.raw
+      val bvs = (0 until ysPerS).map(i => bits.slice(i * rValue.value, (1 + i) * rValue.value))
+      PackedUBitInts(bvs.map(BitVecN[R](_)).map(_.toUBitInt)*)
+    }
+
+    override def embed(at: X, value: UBitInt[R]): PackedUBitInts[R, ysPerS.type] = {
+      val zeroes = Vector.fill(ysPerS)(UBitInt[R](0))
+      val idx = xToIndexOfY(at)
+      PackedUBitInts(zeroes.updated(idx, value)*)
+    }
+
+    override def extract(at: X, from: PackedUBitInts[R, ysPerS.type]): UBitInt[R] = {
+      val idx = xToIndexOfY(at)
+      from.at(idx)
+    }
+  }
+
+  // TODO is it worth generifying to Prg[BitVecN[W], BitVecN[V]]?
+  // biasHelp = how many extra bits to use to make the mapping more balanced
+  def rankedGroupBiasedShiftPacking[X, W <: Int, Y](prg: Prg[BitVecN[W], BitVecN[W]], biasHelp: Int)(using xDomain: Domain[X], wValue: ValueOf[W], yDomain: Domain[Y], yGroup: Group[Y]): Embedding[X, BitVecN[W], Y] = {
+    // TODO add a parameter for packing nicely (i.e. using lcm(W, Y.bitwidth)/W for number of prg blocks)
+
     ???
+  }
+
+  // biasHelp = how many extra bits to use to make rejection less common
+  def rankedGroupRejectionShiftPacking[X, W <: Int, Y](prg: Prg[BitVecN[W], BitVecN[W]], biasHelp: Int)(using xDomain: Domain[X], wValue: ValueOf[W], yDomain: Domain[Y], yGroup: Group[Y]): Embedding[X, BitVecN[W], Y] = {
+    ???
+  }
 
 }

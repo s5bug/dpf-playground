@@ -49,12 +49,16 @@ object UBitInt {
     def %(other: UBitInt[N])(using n: ValueOf[N]): UBitInt[N] =
       (u: SafeLong) % (other: SafeLong)
 
+    def toSafeLong: SafeLong = u
+    
     def toInt: Int =
       if u > Int.MaxValue then throw new IllegalArgumentException(s"${u} too big for Int")
       else u.toInt
       
     def toBitVecN(using n: ValueOf[N]): BitVecN[N] =
       BitVector.fromBigInt(u.toBigInt, Some(n.value)).asInstanceOf[BitVecN[N]]
+      
+    def asSigned: BitInt[N] = u
   }
 
   def apply[N <: Int](value: BigInt)(using n: ValueOf[N]): UBitInt[N] = {
@@ -122,6 +126,9 @@ object BitInt {
   extension[N <: Int] (bi: BitInt[N]) {
     def +(other: BitInt[N])(using value: ValueOf[N]): BitInt[N] = (bi: UBitInt[N]) + (other: UBitInt[N])
     def unary_-(using value: ValueOf[N]): BitInt[N] = -(bi: UBitInt[N])
+    
+    def asUnsigned: UBitInt[N] = bi
+    def toBitVecN(using n: ValueOf[N]): BitVecN[N] = UBitInt.toBitVecN(asUnsigned)
   }
 
   def apply[N <: Int](value: BigInt)(using n: ValueOf[N]): BitInt[N] = UBitInt.apply[N](value)
