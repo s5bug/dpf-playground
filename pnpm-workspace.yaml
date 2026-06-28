@@ -1,5 +1,9 @@
 allowBuilds:
   "@parcel/watcher": false
 overrides:
-  "@scala-js/vite-plugin-scalajs>vite": "$vite"
+  "@scala-js/vite-plugin-scalajs>vite": "catalog:"
   "esbuild": "-"
+catalog:
+  vite: ^8.1.0
+patchedDependencies:
+  '@scala-js/vite-plugin-scalajs': patches/@scala-js__vite-plugin-scalajs.patch

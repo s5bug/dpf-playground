@@ -1,0 +1,13 @@
+diff --git a/dist/index.js b/dist/index.js
+index 44fa5d3a943e310fa9e4545890dcaebe0ddc1736..948f35091eabf97cf3376fefb2d2946610d8fb90 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -1,7 +1,7 @@
+ import { spawn } from "child_process";
+ // Utility to invoke a given sbt task and fetch its output
+ function printSbtTask(task, cwd) {
+-    const args = ["--batch", "-no-colors", "-Dsbt.supershell=false", `print ${task}`];
++    const args = ["--server", "--batch", "-no-colors", "-Dsbt.supershell=false", `print ${task}`];
+     const options = {
+         cwd: cwd,
+         stdio: ['ignore', 'pipe', 'inherit'],
