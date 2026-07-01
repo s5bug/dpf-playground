@@ -1,9 +1,9 @@
-package tf.bug
+package tf.bug.dpf.impl
 
 import cats.syntax.group.*
 import scodec.bits.BitVector
 import spire.algebra.Group
-import tf.bug.{BitInt, BitVecN, UBitInt}
+import tf.bug.dpf.impl.{BitInt, BitVecN, UBitInt}
 
 opaque type PackedUBitInts[W <: Int, N <: Int] = BitVector
 

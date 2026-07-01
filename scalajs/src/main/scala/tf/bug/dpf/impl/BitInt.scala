@@ -1,20 +1,21 @@
-package tf.bug
+package tf.bug.dpf.impl
 
 import calico.html.{Html, HtmlAttr}
-import cats.syntax.functor.given
-import cats.{Monad, Show}
 import cats.effect.std.Random
 import cats.effect.{Async, Resource}
 import cats.kernel.BoundedEnumerable
+import cats.syntax.functor.given
+import cats.{Monad, Show}
 import fs2.concurrent.Signal
 import fs2.dom.HtmlElement
-import scala.collection.IterableOnce
 import scodec.Codec
 import scodec.bits.{BitVector, ByteVector}
 import spire.algebra.{Group, Order}
 import spire.math.SafeLong
 import tf.bug
 import tf.bug.dpf.{Correctable, Domain, Sampleable, Sampler}
+
+import scala.collection.IterableOnce
 
 opaque type UBitInt[N <: Int] = SafeLong
 
@@ -79,17 +80,6 @@ object UBitInt {
     def show(t: UBitInt[N]): String = s"${t} ∈ ℕ${subscriptValue}"
   }
 
-  given ubitIntHtmlShow[N <: Int](using n: ValueOf[N]): HtmlShow[UBitInt[N]] with {
-    def html[F[_]](a: Signal[F, UBitInt[N]])(using async: Async[F]): Resource[F, HtmlElement[F]] = {
-      import calico.frp.given
-      val html = Html[F]
-      import html.given
-      component.Katex(
-        html.dataAttr("src") <-- a.map(b => raw"""${b} \in \mathbb{N}_{2^{${n.value}}}""")
-      )
-    }
-  }
-
   given ubitIntOrder[N <: Int](using n: ValueOf[N]): Order[UBitInt[N]] with {
     def compare(x: UBitInt[N], y: UBitInt[N]): Int = Order[SafeLong].compare(x, y)
   }
@@ -129,6 +119,12 @@ object BitInt {
     
     def asUnsigned: UBitInt[N] = bi
     def toBitVecN(using n: ValueOf[N]): BitVecN[N] = UBitInt.toBitVecN(asUnsigned)
+    def toSafeLong(using n: ValueOf[N]): SafeLong = {
+      val overflowPoint: SafeLong = SafeLong.one << (n.value - 1)
+      val size: SafeLong = overflowPoint << 1
+      val isNegative = bi > overflowPoint
+      if isNegative then bi - size else bi
+    }
   }
 
   def apply[N <: Int](value: BigInt)(using n: ValueOf[N]): BitInt[N] = UBitInt.apply[N](value)
@@ -145,24 +141,6 @@ object BitInt {
       val isNegative = t > overflowPoint
       val corrected = if isNegative then t - size else t
       s"${corrected} ∈ ℤ${subscriptValue}"
-    }
-  }
-
-  given bitIntHtmlShow[N <: Int](using n: ValueOf[N]): HtmlShow[BitInt[N]] with {
-    val overflowPoint: SafeLong = SafeLong.one << (n.value - 1)
-    val size: SafeLong = overflowPoint << 1
-
-    def html[F[_]](a: Signal[F, BitInt[N]])(using async: Async[F]): Resource[F, HtmlElement[F]] = {
-      import calico.frp.given
-      val corrected = a.map { bi =>
-        val isNegative = bi > overflowPoint
-        if isNegative then bi - size else bi
-      }
-      val html = Html[F]
-      import html.given
-      component.Katex(
-        html.dataAttr("src") <-- corrected.map(c => raw"""$c \in \mathbb{Z}_{2^{${n.value}}}""")
-      )
     }
   }
 

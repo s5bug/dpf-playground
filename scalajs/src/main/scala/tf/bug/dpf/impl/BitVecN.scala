@@ -1,9 +1,8 @@
-package tf.bug
+package tf.bug.dpf.impl
 
 import calico.html.Html
 import cats.Monad
-import cats.effect.Async
-import cats.effect.Resource
+import cats.effect.{Async, Resource}
 import cats.effect.std.Random
 import cats.syntax.all.*
 import fs2.concurrent.Signal
@@ -12,6 +11,7 @@ import scodec.Codec
 import scodec.bits.BitVector
 import spire.algebra.Group
 import spire.math.SafeLong
+import tf.bug.dpf.impl.{BitInt, UBitInt}
 import tf.bug.dpf.{Correctable, Sampleable, Sampler}
 
 opaque type BitVecN[N <: Int] = BitVector
@@ -56,19 +56,6 @@ object BitVecN {
     def storeAdvice(a: BitVecN[N], party0: Boolean, party1: Boolean): BitVecN[N] =
       a.update(a.size - 2, party0)
         .update(a.size - 1, party1)
-  }
-
-  given bitVecNHtmlShow[N <: Int]: HtmlShow[BitVecN[N]] with {
-    def html[F[_]](a: Signal[F, BitVecN[N]])(using async: Async[F]): Resource[F, HtmlElement[F]] = {
-      import calico.frp.given
-      val html = Html[F]
-      import html.given
-      component.Katex(
-        html.dataAttr("src") <-- a.map { b =>
-          raw"""${b.toBin}_2"""
-        }
-      )
-    }
   }
   
   given bitVecNSampleable[N <: Int](using n: ValueOf[N]): Sampleable[BitVecN[N]] with {

@@ -6,7 +6,8 @@ import cats.syntax.all.*
 import scodec.bits.BitVector
 import spire.algebra.Group
 import tf.bug.dpf.Party.Party1
-import tf.bug.{UBitInt, dpf}
+import tf.bug.dpf
+import tf.bug.dpf.impl.UBitInt
 
 final case class Dpf[X, S, L, Y](seed0: S, seed1: S, cws0: Vector[S], cws1: Vector[S], advices: BitVector, leaf0: L, leaf1: L) {
 

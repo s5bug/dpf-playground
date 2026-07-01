@@ -5,7 +5,6 @@ import cats.syntax.foldable.*
 import org.scalajs.dom.{AesCtrParams, AesKeyAlgorithm, BufferSource, CryptoKey, KeyFormat, KeyUsage, webcrypto}
 import scala.scalajs.js.typedarray.{ArrayBuffer, Uint8Array}
 import scodec.bits.{BitVector, ByteVector}
-import tf.bug.{BitVecN, UBitInt}
 import tf.bug.dpf.{Correctable, Prg}
 
 final case class AesPrg(key: BitVecN[128]) extends Prg[BitVecN[128], BitVecN[128]] {

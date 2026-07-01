@@ -18,6 +18,7 @@
     "vite": "catalog:"
   },
   "dependencies": {
-    "katex": "^0.17.0"
+    "katex": "^0.17.0",
+    "modern-normalize": "^3.0.1"
   }
 }

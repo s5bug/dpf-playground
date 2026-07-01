@@ -3,7 +3,6 @@ package tf.bug.dpf.impl
 import cats.Monad
 import cats.effect.std.Random
 import cats.syntax.functor.*
-import tf.bug.{BitVecN, UBitInt}
 import tf.bug.dpf.{Correctable, Seeding}
 
 final class SBoxSeeding[W <: Int] private (val box: IndexedSeq[BitVecN[W]])(using w: ValueOf[W]) extends Seeding[BitVecN[W]] {

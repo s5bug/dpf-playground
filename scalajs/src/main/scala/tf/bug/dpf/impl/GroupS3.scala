@@ -11,7 +11,6 @@ import scodec.Codec
 import spire.algebra.Group
 import tf.bug.dpf.Domain
 import tf.bug.dpf.impl.GroupS3.unsafeGroupS3IsDomain
-import tf.bug.{HtmlShow, UBitInt, component}
 
 enum GroupS3 extends java.lang.Enum[GroupS3] {
   case Identity
@@ -101,24 +100,6 @@ object GroupS3 {
     override type W = 3
     override def indexOf(a: GroupS3): UBitInt[W] = UBitInt[W](a.ordinal())
     override def apply(index: UBitInt[W]): GroupS3 = GroupS3.fromOrdinal(index.toInt)
-  }
-
-  given groupS3HtmlShow: HtmlShow[GroupS3] with {
-    override def html[F[_]](as: Signal[F, GroupS3])(using async: Async[F]): Resource[F, HtmlElement[F]] = {
-      import calico.frp.given
-      val html = Html[F]
-      import html.given
-      component.Katex(
-        html.dataAttr("src") <-- as.map {
-          case GroupS3.Identity => raw"""\begin{pmatrix} 1 & \leftarrow & 1 \\ 2 & \leftarrow & 2 \\ 3 & \leftarrow & 3 \end{pmatrix}"""
-          case GroupS3.Swap12 => raw"""\begin{pmatrix}2 & \swarrow & 1 \\ 1 & \nwarrow & 2 \\ 3 & \leftarrow & 3\end{pmatrix}"""
-          case GroupS3.Swap13 => raw"""\begin{pmatrix}3 & \downarrow & 1 \\ 2 & \leftarrow & 2 \\ 1 & \uparrow & 3\end{pmatrix}"""
-          case GroupS3.Swap23 => raw"""\begin{pmatrix}1 & \leftarrow & 1 \\ 3 & \swarrow & 2 \\ 2 & \nwarrow & 3\end{pmatrix}"""
-          case GroupS3.CycleUp => raw"""\begin{pmatrix}3 & \swarrow & 1 \\ 1 & \swarrow & 2 \\ 2 & \uparrow & 3\end{pmatrix}"""
-          case GroupS3.CycleDown => raw"""\begin{pmatrix}2 & \downarrow & 1 \\ 3 & \nwarrow & 2 \\ 1 & \nwarrow & 3\end{pmatrix}"""
-        }
-      )
-    }
   }
 
 }

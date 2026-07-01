@@ -7,7 +7,7 @@ import scodec.{Attempt, Codec}
 import scodec.bits.BitVector
 import spire.algebra.Group
 import spire.math.SafeLong
-import tf.bug.{BitVecN, PackedUBitInts, UBitInt}
+import tf.bug.dpf.impl.{BitVecN, PackedUBitInts, UBitInt}
 
 // we have to steps that occur as transformations out of a DPF's seed block:
 // 1. S → L, which may involve calling a PRG to lengthen S

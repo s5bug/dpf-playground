@@ -2,7 +2,7 @@ package tf.bug.dpf
 
 import cats.kernel.BoundedEnumerable
 import spire.math.SafeLong
-import tf.bug.UBitInt
+import tf.bug.dpf.impl.UBitInt
 
 trait Domain[A] {
 

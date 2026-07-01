@@ -1,4 +1,4 @@
-package tf.bug.component
+package tf.bug.dpfplayground.component
 
 import calico.html.{Html, HtmlTag, Modifier, io}
 import cats.effect.Resource

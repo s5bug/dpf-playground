@@ -3,7 +3,6 @@ package tf.bug.dpf.impl
 import cats.Monad
 import cats.effect.std.Random
 import cats.syntax.functor.*
-import tf.bug.{BitVecN, UBitInt}
 import tf.bug.dpf.{Correctable, Seeding}
 
 object Ranqd1 extends Seeding[Advised[UBitInt[8]]] {

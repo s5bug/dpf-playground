@@ -7,9 +7,8 @@ import scala.collection.mutable
 import scodec.Codec
 import scodec.bits.BitVector
 import spire.algebra.Group
-import tf.bug.dpf.impl.Advised
+import tf.bug.dpf.impl.{Advised, BitVecN, UBitInt}
 import tf.bug.dpf.*
-import tf.bug.{BitVecN, UBitInt}
 
 final case class FreeGroupElement[A](symbol: A, negative: Boolean)
 

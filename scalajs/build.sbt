@@ -8,7 +8,7 @@ lazy val dpfPlayground = project.in(file("."))
     scalaVersion := "3.8.4",
 
     scalaJSUseMainModuleInitializer := true,
-    Compile / mainClass := Some("tf.bug.DpfPlayground"),
+    Compile / mainClass := Some("tf.bug.dpfplayground.DpfPlayground"),
 
     scalaJSLinkerConfig ~= {
       _.withESFeatures(_.withESVersion(ESVersion.ES2021))
