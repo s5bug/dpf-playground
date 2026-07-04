@@ -18,13 +18,13 @@ import tf.bug.dpfplayground.state.DynamicDpf
 object DpfPlayground extends IOWebApp {
 
   override def render: Resource[effect.IO, HtmlElement[effect.IO]] = for {
-    dpfState <- Resource.eval(SignallingRef.of[IO, DynamicDpf](DynamicDpf.Default))
+    component.Setup(element, result) <- component.Setup()
     r <- {
       div(
         idAttr := "container",
         div(
           idAttr := "left-panel",
-          component.Setup(dpfState)
+          element
         ),
         div(
           idAttr := "right-panel",

@@ -22,7 +22,7 @@ abstract class EmbeddingOption[
   val y: Y
   val yp: YP & y.Params
   
-  def evidence(p: Params): Embedding.Aux[x.Domain[xp.type], s.Seed[sp.type], Leaf[p.type], y.Codomain[yp.type]]
+  def evidence(p: Params): Embedding.Aux[x.Instance[xp.type], s.Instance[sp.type], Leaf[p.type], y.Instance[yp.type]]
 }
 
 object EmbeddingOption {
@@ -75,7 +75,7 @@ object EmbeddingOption {
       override final val y = YOption.YOptBitInt
       override val yp: outputWidth.type = outputWidth
 
-      override def evidence(p: Unit): Aux[x.Domain[xParam.type], BitVecN[128], Nothing, BitInt[outputWidth.type]] = {
+      override def evidence(p: Unit): Aux[x.Instance[xParam.type], BitVecN[128], Nothing, BitInt[outputWidth.type]] = {
         ???
       }
     }

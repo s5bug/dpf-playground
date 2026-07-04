@@ -122,7 +122,7 @@ object BitInt {
     def toSafeLong(using n: ValueOf[N]): SafeLong = {
       val overflowPoint: SafeLong = SafeLong.one << (n.value - 1)
       val size: SafeLong = overflowPoint << 1
-      val isNegative = bi > overflowPoint
+      val isNegative = bi >= overflowPoint
       if isNegative then bi - size else bi
     }
   }
@@ -138,7 +138,7 @@ object BitInt {
 
     val subscriptValue: String = "₂‸" ++ n.value.toString.map(_ - '0').map(subscriptDigits(_)).mkString
     def show(t: BitInt[N]): String = {
-      val isNegative = t > overflowPoint
+      val isNegative = t >= overflowPoint
       val corrected = if isNegative then t - size else t
       s"${corrected} ∈ ℤ${subscriptValue}"
     }
@@ -149,9 +149,9 @@ object BitInt {
     val size: SafeLong = overflowPoint << 1
 
     def compare(x: BitInt[N], y: BitInt[N]): Int = {
-      val isXNegative = x > overflowPoint
+      val isXNegative = x >= overflowPoint
       val xCorrected = if isXNegative then x - size else x
-      val isYNegative = y > overflowPoint
+      val isYNegative = y >= overflowPoint
       val yCorrected = if isYNegative then y - size else y
       Order[SafeLong].compare(xCorrected, yCorrected)
     }

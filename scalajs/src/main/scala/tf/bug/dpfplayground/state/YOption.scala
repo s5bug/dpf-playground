@@ -5,22 +5,14 @@ import cats.effect.*
 import cats.effect.kernel.Resource
 import fs2.concurrent.SignallingRef
 import fs2.dom.HtmlElement
+import spire.math.SafeLong
 import tf.bug.dpf.impl.BitInt
 
-abstract class YOption {
-  def name: String
-
-  type Params
-  
-  def defaultParams: Params
-  def takeParams(sref: SignallingRef[IO, Params]): Option[Resource[IO, HtmlElement[IO]]]
-
-  type Codomain[P <: Params & Singleton]
-  def defaultCodomain(params: Params): Codomain[params.type]
-  def takeCodomain(params: Params, sref: SignallingRef[IO, Params]): Option[Resource[IO, HtmlElement[IO]]]
+abstract class YOption extends SimpleInstanceOption {
+  def evidenceOfGroup(params: this.Params): spire.algebra.Group[this.Instance[params.type]]
 }
 
-object YOption {
+object YOption extends SimpleInstanceOption.Companion[YOption] {
   val values: Vector[YOption] = Vector(
     YOptBitInt
   )
@@ -30,17 +22,39 @@ object YOption {
 
     override type Params = Int
 
-    override def defaultParams: Int = 32
-    override def takeParams(sref: SignallingRef[IO, Int]): Option[Resource[IO, HtmlElement[IO]]] = Some(
+    override def defaultParams: Some[Int] = Some(8)
+    override def takeParams(sref: SignallingRef[IO, Option[Int]]): Option[Resource[IO, HtmlElement[IO]]] = Some(
       div(
         label(forId := "yopt-bitint-bits", "Bits: "),
-        input(labelAttr := "yopt-bitint-bits", `type` := "number", minAttr := "1", maxAttr := "128")
+        input.withSelf { self => (
+          labelAttr := "yopt-bitint-bits", `type` := "number",
+          minAttr := "1",
+          maxAttr := "128",
+          value <-- sref.map(_.map(_.toString).getOrElse("")),
+          onInput --> { _.evalMap(_ => self.value.get).foreach(v => sref.set(v.toIntOption)) }
+        )}
       )
     )
 
-    override type Codomain[P <: Params & Singleton] = BitInt[P]
-    override def defaultCodomain(params: Int): BitInt[params.type] = BitInt[params.type](0)
-    // TODO do this shit
-    override def takeCodomain(params: Int, sref: SignallingRef[IO, Int]): Option[Resource[IO, HtmlElement[IO]]] = None
+    override type Instance[P <: Params & Singleton] = BitInt[P]
+    override def defaultInstance(params: Int): Option[BitInt[params.type]] = if params >= 4 then Some(BitInt[params.type](7)) else None
+    override def takeInstance(params: Int, sref: SignallingRef[IO, Option[BitInt[params.type]]]): Option[Resource[IO, HtmlElement[IO]]] = {
+      val negativeBound = -(SafeLong(1) << (params - 1))
+      val positiveBound = (SafeLong(1) << (params - 1)) - 1
+
+      Some(
+        div(
+          input.withSelf { self => (
+            idAttr := "yopt-bitint-value", aria.label := "Output Value", `type` := "number",
+            minAttr := negativeBound.toString, maxAttr := positiveBound.toString,
+            value <-- sref.map(_.map(_.toSafeLong.toString).getOrElse("")),
+            onInput --> { _.evalMap(_ => self.value.get).foreach(v => sref.set(util.Try(BitInt[params.type](BigInt(v))).toOption)) }
+          )}
+        )
+      )
+    }
+
+    override def evidenceOfGroup(params: Int): spire.algebra.Group[BitInt[params.type]] =
+      summon
   }
 }
