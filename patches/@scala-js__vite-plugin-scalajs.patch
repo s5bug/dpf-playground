@@ -1,13 +1,92 @@
 diff --git a/dist/index.js b/dist/index.js
-index 44fa5d3a943e310fa9e4545890dcaebe0ddc1736..948f35091eabf97cf3376fefb2d2946610d8fb90 100644
+index 44fa5d3a943e310fa9e4545890dcaebe0ddc1736..d43e992355c274df7873c2a52ea22ff71acb3bd9 100644
 --- a/dist/index.js
 +++ b/dist/index.js
-@@ -1,7 +1,7 @@
- import { spawn } from "child_process";
+@@ -1,38 +1,56 @@
+-import { spawn } from "child_process";
++import { spawn } from "node:child_process";
++import os from "node:os";
++import path from "node:path";
++import { mkdtemp, readFile, rmdir, rm } from "node:fs/promises";
  // Utility to invoke a given sbt task and fetch its output
- function printSbtTask(task, cwd) {
+-function printSbtTask(task, cwd) {
 -    const args = ["--batch", "-no-colors", "-Dsbt.supershell=false", `print ${task}`];
-+    const args = ["--server", "--batch", "-no-colors", "-Dsbt.supershell=false", `print ${task}`];
-     const options = {
-         cwd: cwd,
-         stdio: ['ignore', 'pipe', 'inherit'],
+-    const options = {
+-        cwd: cwd,
+-        stdio: ['ignore', 'pipe', 'inherit'],
+-    };
+-    const child = process.platform === 'win32'
+-        ? spawn("sbt.bat", args.map(x => `"${x}"`), { shell: true, ...options })
+-        : spawn("sbt", args, options);
+-    let fullOutput = '';
+-    child.stdout.setEncoding('utf-8');
+-    child.stdout.on('data', data => {
+-        fullOutput += data;
+-        process.stdout.write(data); // tee on my own stdout
+-    });
+-    return new Promise((resolve, reject) => {
+-        child.on('error', err => {
+-            reject(new Error(`sbt invocation for Scala.js compilation could not start. Is it installed?\n${err}`));
++async function printSbtTask(task, cwd) {
++    const baseTmp = os.tmpdir();
++    const myTmp = await mkdtemp(path.join(baseTmp, "scalajs-vite-plugin-"));
++    const myTmpFile = path.join(myTmp, "out");
++    try {
++        const args = [
++            "--batch",
++            "-no-colors",
++            "-Dsbt.supershell=false",
++            `set TaskKey[Unit]("dummy") := sbt.IO.write(file("${myTmpFile}"), (Compile / ${task}).value.toString, java.nio.charset.StandardCharsets.UTF_8);`,
++            "dummy"
++        ];
++        const options = {
++            cwd: cwd,
++            stdio: ['ignore', 'pipe', 'inherit'],
++        };
++        const child = process.platform === 'win32'
++            ? spawn("sbt.bat", args.map(x => `"${x}"`), { shell: true, ...options })
++            : spawn("sbt", args, options);
++        let fullOutput = '';
++        child.stdout.setEncoding('utf-8');
++        child.stdout.on('data', data => {
++            fullOutput += data;
++            process.stdout.write(data); // tee on my own stdout
+         });
+-        child.on('close', code => {
+-            if (code !== 0) {
+-                let errorMessage = `sbt invocation for Scala.js compilation failed with exit code ${code}.`;
+-                if (fullOutput.includes("Not a valid command: --")) {
+-                    errorMessage += "\nCause: Your sbt launcher script version is too old (<1.3.3).";
+-                    errorMessage += "\nFix: Re-install the latest version of sbt launcher script from https://www.scala-sbt.org/";
++        return await new Promise((resolve, reject) => {
++            child.on('error', err => {
++                reject(new Error(`sbt invocation for Scala.js compilation could not start. Is it installed?\n${err}`));
++            });
++            child.on('close', code => {
++                if (code !== 0) {
++                    let errorMessage = `sbt invocation for Scala.js compilation failed with exit code ${code}.`;
++                    if (fullOutput.includes("Not a valid command: --")) {
++                        errorMessage += "\nCause: Your sbt launcher script version is too old (<1.3.3).";
++                        errorMessage += "\nFix: Re-install the latest version of sbt launcher script from https://www.scala-sbt.org/";
++                    }
++                    reject(new Error(errorMessage));
++                }
++                else {
++                    readFile(myTmpFile, 'utf-8').then(resolve).catch(reject);
+                 }
+-                reject(new Error(errorMessage));
+-            }
+-            else {
+-                resolve(fullOutput.trimEnd().split('\n').at(-1));
+-            }
++            });
+         });
+-    });
++    }
++    finally {
++        await rm(myTmpFile);
++        await rmdir(myTmp);
++    }
+ }
+ export default function scalaJSPlugin(options = {}) {
+     const { cwd, projectID, uriPrefix } = options;
