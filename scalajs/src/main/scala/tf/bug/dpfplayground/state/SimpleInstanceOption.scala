@@ -9,6 +9,7 @@ abstract class SimpleInstanceOption {
 
   type Params
   def defaultParams: Option[Params] = None
+  // TODO refactor this into something that returns a signal and an element
   def takeParams(sref: SignallingRef[IO, Option[Params]]): Option[Resource[IO, HtmlElement[IO]]]
 
   type Instance[P <: Params & Singleton]

@@ -7,7 +7,7 @@ import scodec.{Attempt, Codec}
 import scodec.bits.BitVector
 import spire.algebra.Group
 import spire.math.SafeLong
-import tf.bug.dpf.impl.{BitVecN, PackedUBitInts, UBitInt}
+import tf.bug.dpf.impl.{BitInt, BitVecN, PackedBitInts, PackedUBitInts, UBitInt}
 
 // we have to steps that occur as transformations out of a DPF's seed block:
 // 1. S → L, which may involve calling a PRG to lengthen S
@@ -146,6 +146,66 @@ object Embedding {
     }
 
     override def extract(at: X, from: PackedUBitInts[R, ysPerS.type]): UBitInt[R] = {
+      val idx = xToIndexOfY(at)
+      from.at(idx)
+    }
+  }
+
+  // TODO fix code duplication here wrt UBitInt/BitInt, maybe using Codec?
+  def additiveSharePacking[X, W <: Int, R <: Int](using xDomain: Domain[X], wValue: ValueOf[W], rValue: ValueOf[R]): Embedding[X, BitVecN[W], BitInt[R]] =
+    new AdditiveSharePacking[X, W, R](xDomain, wValue, rValue)
+
+  private final class AdditiveSharePacking[X, W <: Int, R <: Int](val xDomain: Domain[X], val wValue: ValueOf[W], val rValue: ValueOf[R]) extends Embedding[X, BitVecN[W], BitInt[R]] {
+    private inline given wValue.type = wValue
+
+    private inline given rValue.type = rValue
+
+    // TODO move validation from constructor to method
+    // how many leaf values can be stored in a block
+    val ysPerS: Int = wValue.value / rValue.value
+    // how many indexes there are into blocks
+    // = xDomain.size.ceilDiv(ysPerS)
+    val nonEmptyLeafBlocks: SafeLong = (xDomain.size + (ysPerS - 1)) / ysPerS
+    // how many bits are required to select a unique block
+    // 1 block → 0 bits
+    // 2 blocks → 1 bit
+    // 3 blocks → 2 bits
+    // 4 blocks → 2 bits
+    // 5 thru 8 blocks → 3 bits
+    val indexLength: Int = (nonEmptyLeafBlocks - 1).bitLength
+
+    def xToIndexOfBlock(x: X): SafeLong = {
+      xDomain.indexOf(x).toSafeLong / ysPerS
+    }
+
+    def xToIndexOfY(x: X): Int = {
+      (xDomain.indexOf(x).toSafeLong % ysPerS).toInt
+    }
+
+    override def directions(x: X): IterableOnce[TreeDirection] = {
+      val idx = xToIndexOfBlock(x)
+      val bits = UBitInt[indexLength.type](idx.toBigInt).toBitVecN.raw
+
+      (0 until indexLength).map(idx => if bits(idx) then TreeDirection.Right else TreeDirection.Left)
+    }
+
+    override type L = PackedBitInts[R, ysPerS.type]
+    override val lIsGroup: Group[PackedBitInts[R, ysPerS.type]] = PackedBitInts.group
+    override val yIsGroup: Group[BitInt[R]] = BitInt.bitIntGroup
+
+    override def lengthen(from: BitVecN[W]): PackedBitInts[R, ysPerS.type] = {
+      val bits = from.raw
+      val bvs = (0 until ysPerS).map(i => bits.slice(i * rValue.value, (1 + i) * rValue.value))
+      PackedBitInts(bvs.map(BitVecN[R](_)).map(_.toBitInt) *)
+    }
+
+    override def embed(at: X, value: BitInt[R]): PackedBitInts[R, ysPerS.type] = {
+      val zeroes = Vector.fill(ysPerS)(BitInt[R](0))
+      val idx = xToIndexOfY(at)
+      PackedBitInts(zeroes.updated(idx, value) *)
+    }
+
+    override def extract(at: X, from: PackedBitInts[R, ysPerS.type]): BitInt[R] = {
       val idx = xToIndexOfY(at)
       from.at(idx)
     }
