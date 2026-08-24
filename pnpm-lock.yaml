@@ -15,7 +15,7 @@ overrides:
   esbuild: '-'
 
 patchedDependencies:
-  '@scala-js/vite-plugin-scalajs': 7153378eaecc224bf8355f9a09a47e51024c304a17396eb3d87d29b1f8d4928a
+  '@scala-js/vite-plugin-scalajs': 4b4eadbc3bf1f1a0a881c2e1e58ea1298dd8a0ef3994166e89e8309f55b37681
 
 importers:
 
@@ -33,7 +33,7 @@ importers:
         version: 2.5.10
       '@scala-js/vite-plugin-scalajs':
         specifier: ^1.1.0
-        version: 1.1.0(patch_hash=7153378eaecc224bf8355f9a09a47e51024c304a17396eb3d87d29b1f8d4928a)(@types/node@26.2.0)(sass-embedded@1.103.1)(sass@1.103.1)
+        version: 1.1.0(patch_hash=4b4eadbc3bf1f1a0a881c2e1e58ea1298dd8a0ef3994166e89e8309f55b37681)(@types/node@26.2.0)(sass-embedded@1.103.1)(sass@1.103.1)
       '@types/node':
         specifier: ^26.2.0
         version: 26.2.0
@@ -810,7 +810,7 @@ snapshots:
 
   '@rolldown/pluginutils@1.0.1': {}
 
-  '@scala-js/vite-plugin-scalajs@1.1.0(patch_hash=7153378eaecc224bf8355f9a09a47e51024c304a17396eb3d87d29b1f8d4928a)(@types/node@26.2.0)(sass-embedded@1.103.1)(sass@1.103.1)':
+  '@scala-js/vite-plugin-scalajs@1.1.0(patch_hash=4b4eadbc3bf1f1a0a881c2e1e58ea1298dd8a0ef3994166e89e8309f55b37681)(@types/node@26.2.0)(sass-embedded@1.103.1)(sass@1.103.1)':
     dependencies:
       vite: 8.2.2(@types/node@26.2.0)(sass-embedded@1.103.1)(sass@1.103.1)
     transitivePeerDependencies:
