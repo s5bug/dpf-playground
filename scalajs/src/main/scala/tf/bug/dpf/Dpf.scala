@@ -9,22 +9,22 @@ import tf.bug.dpf.Party.Party1
 import tf.bug.dpf
 import tf.bug.dpf.impl.UBitInt
 
-final case class Dpf[X, S, L, Y](seed0: S, seed1: S, cws0: Vector[S], cws1: Vector[S], advices: BitVector, leaf0: L, leaf1: L) {
+final case class Dpf[S, L, Y](seed0: S, seed1: S, cws0: Vector[S], cws1: Vector[S], advices: BitVector, leaf0: L, leaf1: L) {
 
-  lazy val p0half: Dpf.Half[X, S, L, Y] = Dpf.Half(seed0, cws0, advices, leaf0)
-  lazy val p1half: Dpf.Half[X, S, L, Y] = Dpf.Half(seed1, cws1, advices, leaf1)
+  lazy val p0half: Dpf.Half[S, L, Y] = Dpf.Half(seed0, cws0, advices, leaf0)
+  lazy val p1half: Dpf.Half[S, L, Y] = Dpf.Half(seed1, cws1, advices, leaf1)
   
   // produces a corrected leaf value for a certain seed, party 0
-  def eval0(x: X, embedding: Embedding.Aux[X, S, L, Y], seeding: Seeding[S]): Y = {
+  def eval0[X](x: X, embedding: Embedding.Aux[S, L, Y], seeding: Seeding[S])(using xDomain: Domain[X]): Y = {
     p0half.eval(Party.Party0, x, embedding, seeding)
   }
 
   // produces a corrected leaf value for a certain seed, party 1
-  def eval1(x: X, embedding: Embedding.Aux[X, S, L, Y], seeding: Seeding[S]): Y = {
+  def eval1[X](x: X, embedding: Embedding.Aux[S, L, Y], seeding: Seeding[S])(using xDomain: Domain[X]): Y = {
     p1half.eval(Party.Party1, x, embedding, seeding)
   }
 
-  def apply(x: X, embedding: Embedding.Aux[X, S, L, Y], seeding: Seeding[S]): Y = {
+  def apply[X](x: X, embedding: Embedding.Aux[S, L, Y], seeding: Seeding[S])(using xDomain: Domain[X]): Y = {
     val p0 = eval0(x, embedding, seeding)
     val p1 = eval1(x, embedding, seeding)
 
@@ -38,9 +38,9 @@ final case class Dpf[X, S, L, Y](seed0: S, seed1: S, cws0: Vector[S], cws1: Vect
 
 object Dpf {
 
-  final case class Half[X, S, L, Y](seed: S, cws: Vector[S], advices: BitVector, leaf: L) {
+  final case class Half[S, L, Y](seed: S, cws: Vector[S], advices: BitVector, leaf: L) {
     
-    def eval(party: Party, at: X, embedding: Embedding.Aux[X, S, L, Y], seeding: Seeding[S]): Y = {
+    def eval[X](party: Party, at: X, embedding: Embedding.Aux[S, L, Y], seeding: Seeding[S])(using xDomain: Domain[X]): Y = {
       // TODO replace printlns with modifying some log for use in displaying
       println("!!! EVAL: " + party)
 
@@ -122,9 +122,9 @@ object Dpf {
   def generate[X, S, L, Y](
     prepared: Prepared[S],
     input: X, output: Y,
-    embedding: Embedding.Aux[X, S, L, Y],
+    embedding: Embedding.Aux[S, L, Y],
     seeding: Seeding[S],
-  ): Dpf[X, S, L, Y] = {
+  )(using xDomain: Domain[X]): Dpf[S, L, Y] = {
     val Prepared(seed0, seed1) = prepared
     
     given groupS: Group[S] = seeding.seedIsCorrectable.group

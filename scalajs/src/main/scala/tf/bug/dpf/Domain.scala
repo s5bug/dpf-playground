@@ -23,3 +23,8 @@ trait Domain[A] {
   def size: SafeLong = maxIdx.toSafeLong - minIdx.toSafeLong
 
 }
+
+object Domain {
+  given orderingForDomain[A](using domain: Domain[A]): Ordering[A] =
+    Ordering.by(a => domain.indexOf(a).toSafeLong)
+}

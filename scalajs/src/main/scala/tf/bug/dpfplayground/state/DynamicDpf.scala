@@ -18,7 +18,7 @@ abstract class DynamicDpf {
   val yParam: y.Params
 
   // TODO ???
-  val embedding: EmbeddingOption[x.type, xParam.type, s.type, sParam.type, y.type, yParam.type]
+  val embedding: EmbeddingOption[s.type, sParam.type, y.type, yParam.type]
   val embeddingParam: embedding.Params
 
   // TODO maybe restrict this to a prepared
@@ -27,14 +27,14 @@ abstract class DynamicDpf {
   val input: x.Instance[xParam.type]
   val output: y.Instance[yParam.type]
 
-  lazy val dpf: Dpf[x.Instance[xParam.type], s.Instance[sParam.type], embedding.Leaf[embeddingParam.type], y.Instance[yParam.type]] =
+  lazy val dpf: Dpf[s.Instance[sParam.type], embedding.Leaf[embeddingParam.type], y.Instance[yParam.type]] =
     Dpf.generate(
       Dpf.Prepared(seed0, seed1),
       input,
       output,
       ???,
       ???
-    )
+    )(using x.evidenceOfDomain(xParam))
 }
 
 object DynamicDpf {
@@ -49,7 +49,7 @@ object DynamicDpf {
     override final val yParam: y.Params & 8 = 8
 
     override final val embedding =
-      EmbeddingOption.eOptAdditiveSharePacking(x, xParam, sParam, yParam)
+      EmbeddingOption.eOptAdditiveSharePacking(sParam, yParam)
     override val embeddingParam: Unit = ()
 
     override val seed0: BitVecN[128] = UBitInt[128](BigInt(0)).toBitVecN
