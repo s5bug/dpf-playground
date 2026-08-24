@@ -10,10 +10,10 @@
     "fmt": "biome check --write"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.2",
+    "@biomejs/biome": "2.5.10",
     "@scala-js/vite-plugin-scalajs": "^1.1.0",
-    "@types/node": "^26.1.0",
-    "sass-embedded": "^1.100.0",
+    "@types/node": "^26.2.0",
+    "sass-embedded": "^1.103.1",
     "typescript": "~6.0.3",
     "vite": "catalog:"
   },
