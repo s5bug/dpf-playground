@@ -20,7 +20,7 @@ trait Domain[A] {
   
   def minIdx: UBitInt[W] = indexOf(bounded.minBound)
   def maxIdx: UBitInt[W] = indexOf(bounded.maxBound)
-  def size: SafeLong = maxIdx.toSafeLong - minIdx.toSafeLong
+  def size: SafeLong = 1 + (maxIdx.toSafeLong - minIdx.toSafeLong)
 
 }
 
