@@ -4,6 +4,6 @@ overrides:
   "@scala-js/vite-plugin-scalajs>vite": "catalog:"
   "esbuild": "-"
 catalog:
-  vite: ^8.2.2
+  vite: ^8.3.4
 patchedDependencies:
   '@scala-js/vite-plugin-scalajs': patches/@scala-js__vite-plugin-scalajs.patch
