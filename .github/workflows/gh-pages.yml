@@ -4,7 +4,7 @@ name: Deploy static content to Pages
 on:
   # Runs on pushes targeting the default branch
   push:
-    branches: ['main']
+    branches: ["main"]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -17,7 +17,7 @@ permissions:
 
 # Allow one concurrent deployment
 concurrency:
-  group: 'pages'
+  group: "pages"
   cancel-in-progress: true
 
 jobs:
@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       JAVA_OPTS: -Xms6G -Xmx6G -Xss4M
-      JVM_OPTS:  -Xms6G -Xmx6G -Xss4M
+      JVM_OPTS: -Xms6G -Xmx6G -Xss4M
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -46,7 +46,7 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: latest
-          cache: 'pnpm'
+          cache: "pnpm"
       - name: Install dependencies
         run: pnpm install
       - name: Setup Java
@@ -65,7 +65,7 @@ jobs:
         uses: actions/upload-pages-artifact@v5
         with:
           # Upload dist folder
-          path: './dist'
+          path: "./dist"
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
